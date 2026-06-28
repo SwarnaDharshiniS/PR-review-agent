@@ -87,14 +87,6 @@ npm run dev
 # → http://localhost:5173
 ```
 
-### 7. Deploy to lemma.work
-
-```bash
-npm run build
-lemma app deploy --pod-id $POD_ID --dir ./dist
-# You'll get a lemma.work URL — share this for judging
-```
-
 ---
 
 ## Project structure
