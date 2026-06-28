@@ -30,8 +30,8 @@ Built for the **Gappy AI Hackathon** on the **Lemma SDK**.
 ### 1. Install the Lemma CLI
 
 ```bash
-npm install -g lemma-terminal
-lemma login
+uv tool install lemma-terminal
+lemma auth login
 ```
 
 ### 2. Create a pod
