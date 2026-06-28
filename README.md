@@ -47,20 +47,21 @@ lemma pod describe   # copy the pod ID
 Run these in order from the project root:
 
 ```bash
+Run these in order from the project root:
 POD_ID=<your-pod-id>
 
 # Table (stores review history)
-lemma table create --pod-id $POD_ID --payload-file ./payloads/reviews-table.json
+lemma table create pr_reviews --file ./payloads/reviews-table.json --pod $POD_ID
 
 # Functions
-lemma function create --pod-id $POD_ID --payload-file ./payloads/fetch-pr-diff-function.json
-lemma function create --pod-id $POD_ID --payload-file ./payloads/save-review-function.json
+lemma function create --file ./payloads/fetch-pr-diff-function.json --pod $POD_ID
+lemma function create --file ./payloads/save-review-function.json --pod $POD_ID
 
 # Agent (the core reviewer)
-lemma agent create --pod-id $POD_ID --payload-file ./payloads/pr-review-agent.json
+lemma agent create --file ./payloads/pr-review-agent.json --pod $POD_ID
 
 # Optional: full workflow (alternative to conversational flow)
-lemma workflow create --pod-id $POD_ID --payload-file ./payloads/pr-review-workflow.json
+lemma workflow create --file ./payloads/pr-review-workflow.json --pod $POD_ID
 ```
 
 ### 4. Verify resources
@@ -68,12 +69,6 @@ lemma workflow create --pod-id $POD_ID --payload-file ./payloads/pr-review-workf
 ```bash
 lemma pod describe $POD_ID
 # You should see: pr_reviews table, fetch_pr_diff function, save_pr_review function, pr_review_agent agent
-
-# Smoke-test the agent with a real PR
-lemma task create --pod-id $POD_ID --agent-name pr_review_agent \
-  --payload '{"input_data": {"diff": "+password = request.GET.get(\"password\")\n+cursor.execute(f\"SELECT * FROM users WHERE password='{password}'\")", "pr_title": "Test PR"}}'
-
-lemma task get <task-id> --pod-id $POD_ID
 ```
 
 ### 5. Configure the frontend
@@ -124,27 +119,6 @@ pr-review-agent/
 ├── package.json
 └── .env.example
 ```
-
----
-
-## Hackathon submission
-
-**Problem:** Code review is the highest-friction bottleneck in dev workflows. Reviewers miss bugs, skip security checks, and leave vague comments. Junior devs block waiting for senior eyes.
-
-**Solution:** ReviewBot is a focused, agentic tool that brings senior-engineer-level review to any PR in seconds. It's not a chat assistant — it does one job (structured review) and does it well.
-
-**Lemma SDK utilization:**
-- `Agent` — judgment-heavy review logic with explicit input/output schema
-- `Function` — deterministic GitHub API call with typed output
-- `Table` — persistent review history across sessions
-- `Workflow` — orchestrated fetch → review → save pipeline
-- `Conversation` — streaming agent interaction from the React frontend via `useConversationMessages`
-
----
-
-## Demo script (for video/judges)
-
-1. Open the app
 2. Paste: `https://github.com/facebook/react/pull/31012` (any public PR works)
 3. Click "Review this PR →"
 4. Show the fetching → reviewing states
