@@ -1,50 +1,38 @@
 {
   "name": "pr_review_workflow",
-  "description": "End-to-end PR review: fetch diff from GitHub → run pr_review_agent → write results to pr_reviews table",
-  "trigger": "manual",
-  "input_schema": {
-    "type": "object",
-    "properties": {
-      "pr_url":       { "type": "string", "description": "GitHub PR URL" },
-      "github_token": { "type": "string", "description": "Optional GitHub token for private repos" }
-    },
-    "required": ["pr_url"]
-  },
+  "description": "Takes a GitHub PR URL, sends it to the pr_review_agent, and stores the result.",
+  "start": { "type": "MANUAL" },
   "nodes": [
     {
-      "id": "fetch_diff",
-      "type": "FUNCTION",
-      "function_name": "fetch_pr_diff",
-      "input_map": {
-        "pr_url":       "$.input.pr_url",
-        "github_token": "$.input.github_token"
+      "id": "intake",
+      "type": "FORM",
+      "label": "PR URL Input",
+      "config": {
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "pr_url": { "type": "string", "description": "GitHub PR URL to review" }
+          },
+          "required": ["pr_url"]
+        }
       }
     },
     {
-      "id": "run_review",
+      "id": "review",
       "type": "AGENT",
-      "agent_name": "pr_review_agent",
-      "depends_on": ["fetch_diff"],
-      "input_map": {
-        "pr_url":         "$.input.pr_url",
-        "pr_title":       "$.nodes.fetch_diff.output.pr_title",
-        "pr_description": "$.nodes.fetch_diff.output.pr_description",
-        "author":         "$.nodes.fetch_diff.output.author",
-        "base_branch":    "$.nodes.fetch_diff.output.base_branch",
-        "diff":           "$.nodes.fetch_diff.output.diff"
+      "label": "Review PR",
+      "config": {
+        "agent_name": "pr_review_agent",
+        "input_mapping": {
+          "pr_url": { "type": "expression", "value": "intake.pr_url" }
+        }
       }
     },
-    {
-      "id": "save_review",
-      "type": "FUNCTION",
-      "function_name": "save_pr_review",
-      "depends_on": ["run_review"],
-      "input_map": {
-        "pr_url":          "$.input.pr_url",
-        "pr_title":        "$.nodes.fetch_diff.output.pr_title",
-        "author":          "$.nodes.fetch_diff.output.author",
-        "review_json":     "$.nodes.run_review.output"
-      }
-    }
-  ]
+    { "id": "end", "type": "END", "label": "Done" }
+  ],
+  "edges": [
+    { "id": "e1", "source": "intake", "target": "review" },
+    { "id": "e2", "source": "review", "target": "end" }
+  ],
+  "visibility": "POD"
 }
