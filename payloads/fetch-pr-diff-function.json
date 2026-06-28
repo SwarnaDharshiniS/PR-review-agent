@@ -1,0 +1,35 @@
+{
+  "name": "fetch_pr_diff",
+  "description": "Fetches the unified diff and metadata for a GitHub pull request. Accepts a PR URL or owner/repo/number.",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "pr_url": {
+        "type": "string",
+        "description": "Full GitHub PR URL, e.g. https://github.com/owner/repo/pull/42"
+      },
+      "github_token": {
+        "type": "string",
+        "description": "Optional GitHub personal access token for private repos"
+      }
+    },
+    "required": ["pr_url"]
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "pr_title":      { "type": "string" },
+      "pr_description":{ "type": "string" },
+      "author":        { "type": "string" },
+      "base_branch":   { "type": "string" },
+      "diff":          { "type": "string" },
+      "files_changed": { "type": "integer" },
+      "additions":     { "type": "integer" },
+      "deletions":     { "type": "integer" }
+    }
+  },
+  "runtime": {
+    "type": "javascript",
+    "handler": "async function run(input) {\n  const { pr_url, github_token } = input;\n  // Parse owner/repo/number from URL\n  const match = pr_url.match(/github\\.com\\/([^\\/]+)\\/([^\\/]+)\\/pull\\/(\\d+)/);\n  if (!match) throw new Error('Invalid GitHub PR URL');\n  const [, owner, repo, number] = match;\n  const headers = { 'Accept': 'application/vnd.github.v3+json' };\n  if (github_token) headers['Authorization'] = `token ${github_token}`;\n  // Fetch PR metadata\n  const meta = await fetch(`https://api.github.com/repos/${owner}/${repo}/pulls/${number}`, { headers }).then(r => r.json());\n  // Fetch diff\n  const diffRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/pulls/${number}`, {\n    headers: { ...headers, 'Accept': 'application/vnd.github.v3.diff' }\n  });\n  const diff = await diffRes.text();\n  return {\n    pr_title: meta.title,\n    pr_description: meta.body || '',\n    author: meta.user?.login || '',\n    base_branch: meta.base?.ref || 'main',\n    diff,\n    files_changed: meta.changed_files,\n    additions: meta.additions,\n    deletions: meta.deletions\n  };\n}"
+  }
+}

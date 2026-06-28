@@ -1,0 +1,18 @@
+{
+  "name": "save_pr_review",
+  "description": "Parses a completed PR review JSON and writes a summary row to the pr_reviews table.",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "pr_url":      { "type": "string" },
+      "pr_title":    { "type": "string" },
+      "author":      { "type": "string" },
+      "review_json": { "type": "string", "description": "Stringified JSON output from pr_review_agent" }
+    },
+    "required": ["pr_url", "review_json"]
+  },
+  "runtime": {
+    "type": "javascript",
+    "handler": "async function run(input, ctx) {\n  const review = JSON.parse(input.review_json);\n  await ctx.tables.insert('pr_reviews', {\n    pr_url:         input.pr_url,\n    pr_title:       input.pr_title || '',\n    author:         input.author || '',\n    verdict:        review.verdict || 'NEEDS_DISCUSSION',\n    summary:        review.summary || '',\n    bug_count:      (review.bugs || []).length,\n    security_count: (review.security || []).length,\n    style_count:    (review.style || []).length,\n    full_review:    input.review_json,\n    status:         'COMPLETE'\n  });\n  return { saved: true };\n}"
+  }
+}

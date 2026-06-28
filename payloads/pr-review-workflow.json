@@ -1,0 +1,50 @@
+{
+  "name": "pr_review_workflow",
+  "description": "End-to-end PR review: fetch diff from GitHub → run pr_review_agent → write results to pr_reviews table",
+  "trigger": "manual",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "pr_url":       { "type": "string", "description": "GitHub PR URL" },
+      "github_token": { "type": "string", "description": "Optional GitHub token for private repos" }
+    },
+    "required": ["pr_url"]
+  },
+  "nodes": [
+    {
+      "id": "fetch_diff",
+      "type": "FUNCTION",
+      "function_name": "fetch_pr_diff",
+      "input_map": {
+        "pr_url":       "$.input.pr_url",
+        "github_token": "$.input.github_token"
+      }
+    },
+    {
+      "id": "run_review",
+      "type": "AGENT",
+      "agent_name": "pr_review_agent",
+      "depends_on": ["fetch_diff"],
+      "input_map": {
+        "pr_url":         "$.input.pr_url",
+        "pr_title":       "$.nodes.fetch_diff.output.pr_title",
+        "pr_description": "$.nodes.fetch_diff.output.pr_description",
+        "author":         "$.nodes.fetch_diff.output.author",
+        "base_branch":    "$.nodes.fetch_diff.output.base_branch",
+        "diff":           "$.nodes.fetch_diff.output.diff"
+      }
+    },
+    {
+      "id": "save_review",
+      "type": "FUNCTION",
+      "function_name": "save_pr_review",
+      "depends_on": ["run_review"],
+      "input_map": {
+        "pr_url":          "$.input.pr_url",
+        "pr_title":        "$.nodes.fetch_diff.output.pr_title",
+        "author":          "$.nodes.fetch_diff.output.author",
+        "review_json":     "$.nodes.run_review.output"
+      }
+    }
+  ]
+}
