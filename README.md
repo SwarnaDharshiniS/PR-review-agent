@@ -119,9 +119,3 @@ pr-review-agent/
 ├── package.json
 └── .env.example
 ```
-2. Paste: `https://github.com/facebook/react/pull/31012` (any public PR works)
-3. Click "Review this PR →"
-4. Show the fetching → reviewing states
-5. Walk through: verdict banner → summary → bugs → security → style → praise
-6. Click History tab → show the saved row
-7. Done — ~45 seconds end to end
